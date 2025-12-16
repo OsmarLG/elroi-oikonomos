@@ -19,9 +19,9 @@ class TeamsTable
             ->columns([
                 TextColumn::make('name')
                     ->searchable(),
-                TextColumn::make('owner_id')
-                    ->numeric()
-                    ->sortable(),
+                TextColumn::make('owner.name')
+                    ->searchable()
+                    ->sortable(),   
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

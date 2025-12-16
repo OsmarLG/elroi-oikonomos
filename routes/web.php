@@ -11,3 +11,7 @@ Route::get('/login', function () {
 Route::get('/register', function () {
     return redirect()->route('filament.admin.auth.register');
 })->name('register');
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/notes/{note}/edit', \App\Livewire\SingleNoteEditor::class)->name('notes.edit_standalone');
+});

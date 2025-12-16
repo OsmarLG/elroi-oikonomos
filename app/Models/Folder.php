@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\HasTags; // Import the trait
 
 class Folder extends Model
 {
     use SoftDeletes;
+    use HasTags; // Use the HasTags trait
     
     protected $fillable = ['name', 'parent_id', 'visibility', 'folderable_type', 'folderable_id'];
 
@@ -33,6 +36,16 @@ class Folder extends Model
     public function children()
     {
         return $this->hasMany(Folder::class, 'parent_id');
+    }
+
+    /**
+     * Scope to eager load children recursively and their notes count.
+     */
+    public function scopeWithRecursiveChildren(Builder $query): Builder
+    {
+        return $query->with(['children' => function ($query) {
+            $query->withCount('notes')->withRecursiveChildren();
+        }])->withCount('notes');
     }
 
     /* ======================

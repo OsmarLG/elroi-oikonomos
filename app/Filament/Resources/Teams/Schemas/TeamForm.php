@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Teams\Schemas;
 
+use BcMath\Number;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 
@@ -13,9 +15,11 @@ class TeamForm
             ->components([
                 TextInput::make('name')
                     ->required(),
-                TextInput::make('owner_id')
-                    ->required()
-                    ->numeric(),
+
+                Select::make('owner_id')
+                    ->label('Owner')
+                    ->relationship('owner', 'name')
+                    ->required(),
             ]);
     }
 }

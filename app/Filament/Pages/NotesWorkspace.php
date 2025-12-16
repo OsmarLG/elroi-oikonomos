@@ -5,110 +5,146 @@ namespace App\Filament\Pages;
 use App\Models\Folder;
 use App\Models\Note;
 use Filament\Pages\Page;
-use Illuminate\Support\Collection;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Livewire\WithPagination;
 use BackedEnum;
 use UnitEnum;
+use Illuminate\Support\Collection;
 
 class NotesWorkspace extends Page
 {
+    use WithPagination;
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::DocumentText;
+    protected static string|UnitEnum|null $navigationGroup = 'Workspace';
+    protected static ?string $slug = 'workspace/notes';
     protected static ?string $navigationLabel = 'Notas';
     protected static ?string $title = 'Notas';
-    protected static string|UnitEnum|null $navigationGroup = 'Workspace';
 
-    /* =========================
-     | STATE
-     ========================= */
-    public ?int $selectedFolder = null;
-    public ?int $selectedNote = null;
+    protected string $paginationTheme = 'tailwind';
 
-    /* =========================
-     | VIEW
-     ========================= */
+    /** Estado simple (permitido) */
+    public ?int $selectedFolderId = null;
+
+    public const ALL_NOTES = null;
+    public const NO_FOLDER = -1;
+
     public function getView(): string
     {
         return 'filament.pages.notes-workspace';
     }
 
     /* =========================
-     | CONTEXT
-     ========================= */
-    protected function folderContext(): array
-    {
-        return [
-            'type' => auth()->user()::class,
-            'id'   => auth()->id(),
-        ];
-    }
-
-    /* =========================
-     | DATA
+     | FOLDERS (NO PAGINADOS)
      ========================= */
     public function getFoldersProperty(): Collection
     {
-        $ctx = $this->folderContext();
+        if ($this->selectedFolderId > 0) {
+            return $this->selectedFolder?->children ?? collect();
+        }
 
-        return Folder::query()
-            ->whereNull('parent_id')
-            ->where('folderable_type', $ctx['type'])
-            ->where('folderable_id', $ctx['id'])
-            ->with('children')
-            ->orderBy('name')
+        return Folder::whereNull('parent_id')->get();
+    }
+
+    public function getSelectedFolderProperty(): ?Folder
+    {
+        if (!$this->selectedFolderId) {
+            return null;
+        }
+
+        return Folder::with('children')
+            ->find($this->selectedFolderId);
+    }
+
+    /* =========================
+     | RECENT NOTES (SIN PAGINAR)
+     ========================= */
+    public function getLastNotesProperty(): Collection
+    {
+        return Note::query()
+            ->latest('updated_at')
+            ->limit(3)
             ->get();
     }
 
-    public function getNotesProperty(): Collection
+    /* =========================
+     | NOTES (PAGINADAS)
+     ========================= */
+    public function getNotesProperty()
     {
         return Note::query()
-            ->visibleTo(auth()->user())
             ->when(
-                $this->selectedFolder,
-                fn ($q) => $q->where('folder_id', $this->selectedFolder)
+                $this->selectedFolderId === self::NO_FOLDER,
+                fn($q) =>
+                $q->whereNull('folder_id')
             )
-            ->latest()
-            ->get();
+            ->when(
+                is_int($this->selectedFolderId) && $this->selectedFolderId > 0,
+                fn($q) => $q->where('folder_id', $this->selectedFolderId)
+            )
+            ->latest('updated_at')
+            ->paginate(9);
     }
 
     /* =========================
      | ACTIONS
      ========================= */
-    public function selectFolder(int $id): void
+    public function selectFolder(?int $folderId = null): void
     {
-        $this->selectedFolder = $id;
-        $this->selectedNote = null;
+        $this->selectedFolderId = $folderId;
+        $this->resetPage();
     }
 
-    public function selectNote(int $id): void
+    public function selectNote(int $noteId): void
     {
-        $this->selectedNote = $id;
+        // luego abrir editor
     }
 
-    public function createFolder(): void
+    public function getBreadcrumbsProperty(): Collection
     {
-        $ctx = $this->folderContext();
+        $crumbs = collect();
 
-        Folder::create([
-            'name'            => 'Nueva carpeta',
-            'parent_id'       => null,
-            'visibility'      => 'private',
-            'folderable_type' => $ctx['type'],
-            'folderable_id'   => $ctx['id'],
-        ]);
-    }
-
-    public function createNote(): void
-    {
-        $note = Note::create([
-            'title'         => 'Nueva nota',
-            'content'       => '',
-            'visibility'    => 'private',
-            'folder_id'     => $this->selectedFolder,
-            'user_id'       => auth()->id(),
-            'noteable_type' => auth()->user()::class,
-            'noteable_id'   => auth()->id(),
+        // Siempre inicio
+        $crumbs->push([
+            'id' => self::ALL_NOTES,
+            'label' => 'Todas las notas',
         ]);
 
-        $this->selectedNote = $note->id;
+        // CASO: Sin carpeta
+        if ($this->selectedFolderId === self::NO_FOLDER) {
+            $crumbs->push([
+                'id' => self::NO_FOLDER,
+                'label' => 'Sin carpeta',
+            ]);
+
+            return $crumbs;
+        }
+
+        // CASO: Carpeta real
+        $folder = $this->selectedFolder;
+
+        if (! $folder) {
+            return $crumbs;
+        }
+
+        $stack = collect();
+
+        while ($folder) {
+            $stack->push([
+                'id' => $folder->id,
+                'label' => $folder->name,
+            ]);
+
+            $folder = $folder->parent;
+        }
+
+        return $crumbs->merge($stack->reverse());
+    }
+
+    public function goToFolder(?int $folderId = null): void
+    {
+        $this->selectedFolderId = $folderId;
+        $this->resetPage();
     }
 }

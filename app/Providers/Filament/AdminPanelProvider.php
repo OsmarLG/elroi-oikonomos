@@ -32,6 +32,8 @@ class AdminPanelProvider extends PanelProvider
     {
         return $panel
             ->default()
+            // ->sidebarFullyCollapsibleOnDesktop(true)
+            ->sidebarCollapsibleOnDesktop(true)
             ->id('admin')
             ->path('admin')
             ->login()
