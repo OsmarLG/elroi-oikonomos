@@ -2,5 +2,9 @@
   {
     "type": "sqlite",
     "path": "c:\\laragon\\www\\test-kit\\database\\database.sqlite"
+  },
+  {
+    "type": "sqlite",
+    "path": "c:\\laragon\\www\\elroi-oikonomos\\database\\database.sqlite"
   }
 ]

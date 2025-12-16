@@ -10,6 +10,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use Laravel\Cashier\Billable;
+use Filament\Panel;
 
 class User extends Authenticatable implements FilamentUser
 {
@@ -20,6 +21,11 @@ class User extends Authenticatable implements FilamentUser
     use HasRoles;
     use Notifiable;
     use Billable;
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return true;
+    }
 
     protected $hidden = [
         'password',

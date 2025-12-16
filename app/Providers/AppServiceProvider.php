@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Spatie\Activitylog\Models\Activity;
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -31,6 +32,10 @@ class AppServiceProvider extends ServiceProvider
         $this->configureModels();
 
         $this->configureFilament();
+
+        if ($this->app->isProduction()) {
+            URL::forceScheme('https');
+        }
     }
 
     private function configurePolicies(): void
@@ -56,6 +61,6 @@ class AppServiceProvider extends ServiceProvider
     {
         FilamentShield::prohibitDestructiveCommands($this->app->isProduction());
 
-        Table::configureUsing(fn (Table $table) => $table->paginationPageOptions([10, 25, 50]));
+        Table::configureUsing(fn(Table $table) => $table->paginationPageOptions([10, 25, 50]));
     }
 }
