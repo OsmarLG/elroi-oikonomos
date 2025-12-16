@@ -33,9 +33,11 @@ class AppServiceProvider extends ServiceProvider
 
         $this->configureFilament();
 
-        if ($this->app->isProduction()) {
-            URL::forceScheme('https');
-        }
+        URL::forceScheme('https');
+
+        // if (config('app.env') === 'production') {
+        //     URL::forceScheme('https');
+        // }
     }
 
     private function configurePolicies(): void
