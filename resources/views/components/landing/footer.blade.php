@@ -42,7 +42,7 @@
         <div class="mt-10 pt-6 border-t border-white/10 text-xs text-gray-500 flex justify-between">
             <span>© {{ date('Y') }} <span><a href="https://elroi.cloud" target="_blank" class="hover:text-white">ELROI</a></span> Oikonomos</span>
             <span>Hecho con propósito</span>
-            <span>powered by <a href="https://studio.elroi.cloud" target="_blank" class="hover:text-white">ELROI Studio</a></span>
+            <span>powered by <a href="https://labs.elroi.cloud" target="_blank" class="hover:text-white">ELROI Labs</a></span>
         </div>
     </div>
 </footer>
